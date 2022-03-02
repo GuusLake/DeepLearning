@@ -1,7 +1,9 @@
 from operator import ge
+import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.datasets
-import matplotlib.pyplot as plt
+from sklearn.neural_network import MLPClassifier
+
 
 def Sigmoid(X):
     """Calculates the sigmoid
@@ -52,7 +54,8 @@ def dRelu(x):
     return x
 
 class perceptron:
-    def __init__(self, x, y, dims = [2, 15, 1]):
+    def __init__(self, x, y, dims = [15]):
+        dims = [2] + dims + [1]
         self.X = x.T
         self.Y = y
         self.nn_y = np.zeros((1, self.Y.shape[0]))
@@ -206,7 +209,7 @@ def split_data():
     cutoff = int(0.8 * y.size)
     return X[:cutoff], X[cutoff:], y[:cutoff], y[cutoff:]
 
-def train_nn(per, iter = 10000):
+def train_nn(per, iter = 50000):
     """Trains the neural network
 
     Args:
@@ -236,16 +239,16 @@ def calculate_stats(y, result, loss):
     FN = 0
     diff = []
     for i in range(y.size):
-        if (y[i] == result[0][i] == 1):
+        if (y[i] == result[i] == 1):
             TP += 1
             diff.append(1)
-        elif(y[i] == result[0][i] == 0):
+        elif(y[i] == result[i] == 0):
             TN += 1
             diff.append(0)
-        elif(y[i] == 0 and result[0][i] == 1):
+        elif(y[i] == 0 and result[i] == 1):
             FP += 1
             diff.append(0.5)
-        elif(y[i] == 1 and result[0][i] == 0):
+        elif(y[i] == 1 and result[i] == 0):
             FN += 1
             diff.append(0.5)
         else:
@@ -259,23 +262,42 @@ def calculate_stats(y, result, loss):
     print("Accuracy: {}\nLoss: {}\nRecall: {}\nPrecision: {}\nF1: {}\n".format(acc, loss, recall, precision, F1))
     return np.array(diff)
 
-def run_nn():
+def run_nns(layers = [15], iter = 50000):
     """ Trains the homemade perceptron, then tests on the test set and finally calculates results and create plots
-
+        Additionally trains and tests a sklearn, also calculates results and plots
+    
     Args:
+        layers (list): A list of layer sizes
         iter (int, optional): Amount of iterations. Defaults to 3000.
     """    
     X_train, X_test, y_train, y_test = split_data()
 
-    per = perceptron(X_train, y_train)
+    # Our model
+    print("\n### Training homemade model ###\n")
+    per = perceptron(X_train, y_train, layers)
     per.initialise()
-    train_nn(per)
+    train_nn(per, iter)
 
+    print("\n## Printing results ##\n")
     result, loss = per.predict(X_test, y_test)
+    diff = calculate_stats(y_test, result[0], loss)
 
-    diff = calculate_stats(y_test, result, loss)
+    print("\n## Generating plots##\n")
     create_plot(X_train, y_train)
     create_plot(X_test, y_test)
+    create_plot(X_test, diff)
+
+    # Sklearn model
+    print("\n### Training sklearn model ###\n")
+    layers = tuple(layers)
+    clf = MLPClassifier(solver="sgd", hidden_layer_sizes=layers, max_iter=iter)
+    clf.fit(X_train, y_train)
+    
+    print("\n## Printing results ##\n")
+    result = clf.predict(X_test)
+    diff = calculate_stats(y_test, result, clf.loss)
+
+    print("\n## Generating plots##\n")
     create_plot(X_test, diff)
 
 def split_array(X_input):
@@ -307,9 +329,8 @@ def create_plot(X, y):
     plt.show()
 
 
-
 def main():
-    run_nn()
+    run_nns()
 
 if __name__ == "__main__":
     main()

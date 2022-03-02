@@ -1,0 +1,40 @@
+
+### Training homemade model ###
+
+Iteration: 0, Loss: 114.99880970308342
+Iteration: 5000, Loss: 80.09075930563952
+Iteration: 10000, Loss: 67.46409304232063
+Iteration: 15000, Loss: 56.472583330976825
+Iteration: 20000, Loss: 47.39461445302658
+Iteration: 25000, Loss: 39.90912218862489
+Iteration: 30000, Loss: 34.02506404103524
+Iteration: 35000, Loss: 29.41937017669699
+Iteration: 40000, Loss: 25.826463281136135
+Iteration: 45000, Loss: 22.984689063187332
+
+## Printing results ##
+
+Accuracy: 0.98
+Loss: 5.002216491068458
+Recall: 0.9777777777777777
+Precision: 0.9777777777777777
+F1: 0.9777777777777777
+
+
+## Generating plots##
+
+
+### Training sklearn model ###
+
+
+## Printing results ##
+
+Accuracy: 0.97
+Loss: log_loss
+Recall: 0.9772727272727273
+Precision: 0.9555555555555556
+F1: 0.9662921348314608
+
+
+## Generating plots##
+
