@@ -1,4 +1,3 @@
-from operator import ge
 import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.datasets
