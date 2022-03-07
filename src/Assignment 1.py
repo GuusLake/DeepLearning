@@ -231,6 +231,9 @@ def calculate_stats(y, result, loss):
         y (numpy.ndarray): Real data
         result (numpy.ndarray): Results from the neural network
         loss (double): The loss
+    
+    Returns:
+        List: A list of: A numpy array of the results and a list of the statistics of these result
     """    
     TP = 0
     TN = 0
@@ -252,52 +255,59 @@ def calculate_stats(y, result, loss):
             diff.append(0.5)
         else:
             print("Calculation Error")
-        
+    
     acc = (TP + TN) / (y.size)
     recall = TP / (TP + FP)
     precision = TP / (TP + FN)
     F1 = 2 * (precision * recall) / (precision + recall)
 
     print("Accuracy: {}\nLoss: {}\nRecall: {}\nPrecision: {}\nF1: {}\n".format(acc, loss, recall, precision, F1))
-    return np.array(diff)
+    return [np.array(diff), [acc, recall, precision, F1]]
 
-def run_nns(layers = [15], iter = 50000):
+def run_nns(layers = [15], iter = 50000, plots = True):
     """ Trains the homemade perceptron, then tests on the test set and finally calculates results and create plots
         Additionally trains and tests a sklearn, also calculates results and plots
     
     Args:
         layers (list): A list of layer sizes
         iter (int, optional): Amount of iterations. Defaults to 3000.
+
+    Returns:
+        List: A list of two lists: the results of our neural network and the results of the sklearn network
     """    
     X_train, X_test, y_train, y_test = split_data()
 
-    # Our model
-    print("\n### Training homemade model ###\n")
+    # Our neural network
+    print("\n### Training homemade neural network ###\n")
     per = perceptron(X_train, y_train, layers)
     per.initialise()
     train_nn(per, iter)
 
     print("\n## Printing results ##\n")
     result, loss = per.predict(X_test, y_test)
-    diff = calculate_stats(y_test, result[0], loss)
+    diff, results1 = calculate_stats(y_test, result[0], loss)
 
-    print("\n## Generating plots##\n")
-    create_plot(X_train, y_train)
-    create_plot(X_test, y_test)
-    create_plot(X_test, diff)
+    if(plots):
+        print("\n## Generating plots ##\n")
+        create_plot(X_train, y_train)
+        create_plot(X_test, y_test)
+        create_plot(X_test, diff)
 
-    # Sklearn model
-    print("\n### Training sklearn model ###\n")
+    # Sklearn neural network
+    print("\n### Training sklearn neural network ###\n")
     layers = tuple(layers)
     clf = MLPClassifier(solver="sgd", hidden_layer_sizes=layers, max_iter=iter)
     clf.fit(X_train, y_train)
     
     print("\n## Printing results ##\n")
     result = clf.predict(X_test)
-    diff = calculate_stats(y_test, result, clf.loss)
+    diff, results2 = calculate_stats(y_test, result, clf.loss)
 
-    print("\n## Generating plots##\n")
-    create_plot(X_test, diff)
+    if(plots):
+        print("\n## Generating plots##\n")
+        create_plot(X_test, diff)
+
+    return [results1, results2]
 
 def split_array(X_input):
     """Splits a numpy array into two seperate parts
@@ -327,9 +337,39 @@ def create_plot(X, y):
     plt.scatter(X1, X2, c=y, cmap='cividis')
     plt.show()
 
+def run_multiple_nns(n=10):
+    """Calculate average stats for n runs
+
+    Args:
+        n (int, optional): Amount of runs to calculate average and standard deviations with. Defaults to 10.
+    """    
+    print("\n### Calculating Average results ###\n")
+    total_results1 = np.empty((0, 4))
+    total_results2 = np.empty((0, 4))
+    for i in range(n):
+        result1, result2 = run_nns(plots=False)
+        total_results1 = np.append(total_results1, np.array([result1]), axis=0)
+        total_results2 = np.append(total_results2, np.array([result2]), axis=0)
+
+    metrics = ["Accuracy", "Recall", "Precision", "F1"]
+    std1 = np.std(total_results1, axis=0)
+    mean1 = np.mean(total_results1, axis=0)
+    std2 = np.std(total_results2, axis=0)
+    mean2 = np.mean(total_results2, axis=0)
+
+    print("\n## Results of our neural network ##\n")
+    for i in range(len(metrics)):
+        print("{}: {} ± {}".format(metrics[i], mean1[i], std1[i]))
+
+    print("\n## Results of Sklearn network ##\n")
+    for i in range(len(metrics)):
+        print("{}: {} ± {}".format(metrics[i], mean2[i], std2[i]))
+
 
 def main():
     run_nns()
+    run_multiple_nns()
+
 
 if __name__ == "__main__":
     main()
